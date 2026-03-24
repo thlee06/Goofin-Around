@@ -1,0 +1,200 @@
+Context
+Students and faculty at Columbia have no unified way to discover events across departments. Information is siloed on individual department websites or gated behind mailing lists. This project builds a public, no-login web hub that automatically scrapes event listings from multiple department sites and presents them in a searchable, filterable, calendar/map-enabled interface.
+Team: 2–4 developers, ~12-week semester timeline
+Language constraint: Python
+Data strategy: Automated web scraping
+Auth: None (fully public)
+
+Technology Stack
+LayerChoiceReasonWeb frameworkFastAPIAsync-native, auto OpenAPI docs, Pydantic validation built-inTemplatingJinja2 + HTMXServer-rendered HTML with dynamic swaps; no JS framework needed; all logic stays in PythonCSSTailwind CSS (CDN for MVP, compiled for V1)Rapid UI development, no custom CSS file to maintainDatabase (dev)SQLiteZero local setup, any dev can clone and run immediatelyDatabase (prod)PostgreSQL (Railway managed)Production-grade; no operational overhead on RailwayORM + migrationsSQLAlchemy + AlembicStandard Python ORM; migration history for schema changesScraping (static)requests + BeautifulSoup4Simple, fast for HTML pagesScraping (JS sites)Playwright (async Python)Headless Chromium fallback for JS-rendered department sitesSchedulingAPScheduler (in-process)Pure Python, no Redis/Celery needed for a single-worker appFull-text searchWhooshPure Python, no external service, sufficient for thousands of eventsCalendar viewServer-rendered Jinja2 grid40 lines of HTML, simpler than a JS calendar libraryMap viewLeaflet.js + OpenStreetMapFree, no API key, lightweightGeocodingGeocodio (free tier)Best US address support, simple Python client.ics exporticalendar (Python library)Standard library for generating .ics filesDeploymentRailwayGitHub auto-deploy, managed Postgres, persistent volumes, low costError monitoringSentry (free tier)Two lines of code, catches production errors
+
+Directory Structure
+columbia-events/
+├── Main.py                        # Entry point: starts uvicorn, wires lifespan
+├── requirements.txt
+├── requirements-dev.txt
+├── .env.example
+├── alembic.ini
+│
+├── app/
+│   ├── config.py                  # Settings from environment variables
+│   ├── database.py                # SQLAlchemy engine + session factory
+│   │
+│   ├── models/
+│   │   ├── event.py               # Event model (see schema below)
+│   │   ├── department.py          # Department model
+│   │   ├── category.py            # Category model (seeded, fixed taxonomy)
+│   │   └── scrape_log.py          # ScrapeRun audit log
+│   │
+│   ├── schemas/                   # Pydantic schemas for validation + API
+│   │   ├── event.py
+│   │   ├── department.py
+│   │   └── filters.py             # FilterParams (category, date, department, q)
+│   │
+│   ├── scrapers/
+│   │   ├── base.py                # BaseScraper abstract class (rate limit, error handling)
+│   │   ├── registry.py            # Auto-discovers scrapers in departments/
+│   │   ├── scheduler.py           # APScheduler setup, one job per department
+│   │   ├── departments/
+│   │   │   ├── cs.py              # One file per department
+│   │   │   ├── economics.py
+│   │   │   └── ...
+│   │   └── utils/
+│   │       ├── date_parser.py     # CRITICAL: normalizes all date string formats
+│   │       ├── deduplication.py   # external_id hash + cross-department dedup
+│   │       └── location.py        # Location string → lat/lon via Geocodio
+│   │
+│   ├── routers/
+│   │   ├── pages.py               # Server-rendered HTML routes (/, /calendar, /map)
+│   │   ├── events.py              # GET /events, GET /events/{id}
+│   │   ├── search.py              # GET /search?q=
+│   │   └── export.py              # GET /events/{id}/export.ics, bulk export
+│   │
+│   ├── services/
+│   │   ├── event_service.py       # Filtering, pagination, category auto-assignment
+│   │   ├── search_service.py      # Whoosh index lifecycle + query execution
+│   │   ├── ics_service.py         # .ics file generation
+│   │   └── location_service.py    # Geocodio calls, location_overrides.json lookup
+│   │
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── partials/              # HTMX swap targets
+│   │   │   ├── event_card.html
+│   │   │   ├── event_list.html
+│   │   │   ├── filter_bar.html
+│   │   │   └── calendar_grid.html
+│   │   └── pages/
+│   │       ├── index.html
+│   │       ├── event_detail.html
+│   │       ├── calendar.html
+│   │       └── map.html
+│   │
+│   └── static/
+│       ├── js/
+│       │   ├── htmx.min.js
+│       │   ├── saved_events.js    # localStorage save/export logic (~50 lines)
+│       │   └── map.js             # Leaflet initialization
+│       └── css/
+│
+├── search_index/                  # Whoosh files (gitignored, on Railway persistent volume)
+├── alembic/versions/
+├── scripts/
+│   ├── seed_departments.py
+│   ├── run_scraper.py             # Manual trigger for dev
+│   └── rebuild_search_index.py
+├── tests/
+│   ├── test_scrapers/
+│   ├── test_services/
+│   └── test_routes/
+└── data/
+    └── location_overrides.json    # Manual lat/lon for Columbia buildings
+
+Core Data Models
+Event
+id, external_id (dedup hash), title, description, short_description,
+start_datetime (UTC), end_datetime (nullable), all_day,
+location_name, location_address, latitude, longitude,
+source_url, image_url, registration_url, is_free, tags (JSON),
+department_id (FK), category_id (FK, nullable),
+created_at, updated_at, is_active, scrape_run_id (FK)
+
+external_id = hash of (source_url + title) → prevents duplicate inserts on re-scrape
+is_active = False when event disappears from source (never hard-delete)
+All datetimes stored UTC; displayed as America/New_York in templates
+
+Department
+id, name, slug, school, website_url, scraper_class,
+scrape_interval_hours, last_scraped_at, is_enabled, logo_url
+Category (seeded, fixed taxonomy)
+id, name, slug, color_hex, icon_name
+Values: Lecture, Workshop, Social, Career, Arts, Other
+ScrapeRun (audit log — critical for ops visibility)
+id, department_id, started_at, completed_at, status,
+events_found, events_new, events_updated, error_message, duration_seconds
+
+Scraping Architecture
+BaseScraper contract (app/scrapers/base.py)
+pythonclass BaseScraper(ABC):
+    department_slug: str
+    base_url: str
+    use_playwright: bool = False  # subclass sets True if JS rendering needed
+
+    @abstractmethod
+    def get_event_urls(self) -> list[str]: ...
+
+    @abstractmethod
+    def parse_event(self, html: str, url: str) -> dict: ...
+
+    def run(self) -> ScrapeResult:
+        # Handles: rate limiting (1 req/sec), Playwright fallback,
+        # deduplication, DB writes, ScrapeRun record, error capture
+```
+
+### Scheduling
+- APScheduler runs inside the FastAPI process (single worker)
+- One job per enabled department; interval = `department.scrape_interval_hours`
+- `max_instances=1` per department — never double-runs
+- `misfire_grace_time=600` — catches up within 10 min if server was restarted
+
+### Error handling tiers
+1. **Single URL 404/error**: log, skip, continue scraping rest of department
+2. **Full department failure**: mark ScrapeRun "failed"; do NOT deactivate existing events yet; after 3 consecutive failures, emit warning
+3. **Parse/schema error**: log bad record with source URL; skip that event; don't crash the scraper
+
+---
+
+## Frontend: HTMX Interaction Patterns
+
+- **Filtering**: checkboxes/date picker → `hx-get="/events?category=X&start=Y"` → swaps `#event-list`
+- **Search**: `hx-get="/search" hx-trigger="keyup changed delay:300ms"` → live results
+- **Calendar navigation**: "Next month" → `hx-get="/calendar?month=2026-04"` → swaps grid
+- **Map view**: server sets event coords as JSON in a `data-events` attribute; `map.js` reads it and initializes Leaflet
+- **Save feature**: `saved_events.js` reads/writes event IDs to `localStorage`; shareable URL pattern `/saved?ids=1,2,3`
+
+---
+
+## Deployment (Railway)
+```
+Railway Project
+├── web service        (FastAPI + uvicorn --workers 1)
+├── postgres           (Managed PostgreSQL)
+└── persistent volume  (mounted at /search_index/)
+Environment variables: DATABASE_URL, SECRET_KEY, ENVIRONMENT, GEOCODING_API_KEY
+
+Development Roadmap
+MVP (Weeks 1–6): Working deployed site, 3 departments
+WeekFocusMilestone1Project scaffold, DB models, Alembic, Railway deploy"Hello world" live on Railway2BaseScraper, date_parser.py + tests, first department scraperrun_scraper.py --dept cs inserts real events32 more scrapers, event list page, HTMX filtering, detail pageDeployed site shows filterable real events4Whoosh search service, live search bar"economics seminar" returns results5ics_service.py, single + bulk .ics export, saved_events.jsUser can save + export events without login6APScheduler wired up, /admin/scrapes status page, mobile layout, SEOMVP launch
+V1 (Weeks 7–12): Full feature set
+WeekFocus7Calendar view (Jinja2 grid + HTMX day-click)8Map view (Geocodio geocoding, Leaflet.js, location_overrides.json)9Expand to 8–10 departments; add Playwright scrapers for JS-rendered sites10Search quality (boosting, spelling suggestions, faceted counts), category auto-assignment11RSS feed, Open Graph images, social sharing12Caching, Sentry, analytics, load testing, V1 launch
+
+Critical Edge Cases & Technical Hurdles
+Scraping
+
+JS-rendered pages: use_playwright = True triggers Playwright; it's slow (~3–5s/page) — scrape only index pages with Playwright, not every detail page
+Anti-scraping: Use polite rate limiting (1 req/sec) and a descriptive User-Agent header; back off on 429s rather than retrying aggressively
+Inconsistent date strings: date_parser.py is the highest-risk module — build thorough unit tests for it in Week 2; wraps dateutil with custom fallbacks
+Recurring events: "Every Tuesday through May" = multiple rows; build expand_recurring() in date_parser.py; fall back to single event + description note for complex rules
+Event pages that 404 mid-scrape: Catch 404 explicitly, skip, log, continue
+
+Data Quality
+
+Cross-department duplicates: Same joint event posted by two departments → secondary dedup pass in deduplication.py matching on (title + start_datetime)
+Location strings that don't geocode: Pre-populate location_overrides.json with 30 common Columbia building names; "Zoom"/"TBA" → latitude = NULL, excluded from map
+Time zone ambiguity: Default all times without explicit TZ to America/New_York; flag explicit non-ET zones in a timezone_flag column
+
+Architecture
+
+Whoosh index persistence: Mount search_index/ on Railway persistent volume; add startup check to rebuild from DB if directory is empty
+APScheduler + multiple workers: Never deploy with --workers > 1 (causes double-scraping); single worker is sufficient for this scale
+Blocking I/O in async: Run all scraper HTTP calls in asyncio.run_in_executor() or switch to httpx (async-native) — decide at project start and be consistent
+"Saved events" are browser-local: Communicate this clearly in the UI; offer shareable /saved?ids=1,2,3 URLs as a workaround
+
+
+Verification Plan
+
+Unit tests: tests/test_services/test_date_parser.py — cover 15+ real-world date string formats
+Scraper tests: Each scraper has a fixture (saved HTML file) test in tests/test_scrapers/
+Integration test: python scripts/run_scraper.py --dept cs → verify rows appear in DB
+End-to-end: Visit deployed URL, filter by department, search, export .ics, verify file opens in Apple Calendar / Google Calendar
+Map: Confirm events with known addresses show correct pins; confirm "Zoom" events are excluded
+Scheduler: Check /admin/scrapes page shows successful ScrapeRun entries after deploy
