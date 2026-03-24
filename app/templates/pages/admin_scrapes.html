@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Scrape Status — Columbia Events Hub{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Scrape Status</h1>
+    <p class="text-sm text-gray-500 mt-1">Last 100 scrape runs. Not linked from the main nav — internal use only.</p>
+  </div>
+
+  <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 font-medium text-gray-600">Department</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-600">Started</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+          <th class="text-right px-4 py-3 font-medium text-gray-600">New</th>
+          <th class="text-right px-4 py-3 font-medium text-gray-600">Updated</th>
+          <th class="text-right px-4 py-3 font-medium text-gray-600">Duration</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-600">Error</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for run in runs %}
+        {% set status_colors = {
+          'success': 'bg-green-100 text-green-700',
+          'partial': 'bg-yellow-100 text-yellow-700',
+          'failed': 'bg-red-100 text-red-700',
+          'running': 'bg-blue-100 text-blue-700'
+        } %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-medium">{{ run.department.name if run.department else run.department_id }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ run.started_at.strftime('%b %-d %H:%M') }}</td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ status_colors.get(run.status, '') }}">
+              {{ run.status }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-right text-gray-700">{{ run.events_new }}</td>
+          <td class="px-4 py-3 text-right text-gray-700">{{ run.events_updated }}</td>
+          <td class="px-4 py-3 text-right text-gray-500">
+            {% if run.duration_seconds %}{{ '%.1f' % run.duration_seconds }}s{% endif %}
+          </td>
+          <td class="px-4 py-3 text-red-500 text-xs max-w-xs truncate" title="{{ run.error_message or '' }}">
+            {{ run.error_message or '' }}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">No scrape runs yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

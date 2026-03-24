@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Map — Columbia Events Hub{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Events Map</h1>
+    <p class="text-sm text-gray-500 mt-1">Events with known campus locations. Virtual and TBA events are not shown.</p>
+  </div>
+
+  <!-- Map container — events JSON passed via data attribute -->
+  <div
+    id="map"
+    class="rounded-lg border border-gray-200 shadow-sm"
+    style="height: 600px;"
+    data-events="{{ events_json | e }}"
+  ></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/map.js"></script>
+{% endblock %}

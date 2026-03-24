@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Columbia Events Hub{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Find events across Columbia University departments — lectures, workshops, social events, and more.{% endblock %}" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{% block og_title %}Columbia Events Hub{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}Find events across Columbia University departments.{% endblock %}" />
+  <meta property="og:type" content="website" />
+
+  <!-- Tailwind CSS (CDN for MVP) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            columbia: { blue: '#003087', light: '#75B2DD' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- HTMX -->
+  <script src="/static/js/htmx.min.js"></script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+
+  <!-- Nav -->
+  <nav class="bg-columbia-blue text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/" class="text-xl font-bold tracking-tight hover:text-columbia-light transition-colors">
+        Columbia Events Hub
+      </a>
+      <div class="flex gap-6 text-sm font-medium">
+        <a href="/" class="hover:text-columbia-light transition-colors">Events</a>
+        <a href="/calendar" class="hover:text-columbia-light transition-colors">Calendar</a>
+        <a href="/map" class="hover:text-columbia-light transition-colors">Map</a>
+        <a href="/departments" class="hover:text-columbia-light transition-colors">Departments</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 text-sm text-gray-500 py-4">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <span>Columbia Events Hub &mdash; aggregating events from across Columbia University</span>
+      <span class="text-xs">Events sourced automatically. Check original sources for updates.</span>
+    </div>
+  </footer>
+
+  <!-- Saved Events JS -->
+  <script src="/static/js/saved_events.js"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

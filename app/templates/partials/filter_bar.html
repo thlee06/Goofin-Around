@@ -1,0 +1,75 @@
+<form
+  id="filter-form"
+  hx-get="/"
+  hx-target="#event-list"
+  hx-push-url="true"
+  hx-trigger="change, search"
+  class="bg-white border border-gray-200 rounded-lg p-4 flex flex-wrap gap-4 items-end"
+>
+  <!-- Search -->
+  <div class="flex-1 min-w-48">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Search</label>
+    <input
+      type="search"
+      name="q"
+      value="{{ filters.q or '' }}"
+      placeholder="Lectures, workshops, receptions…"
+      class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-columbia-blue"
+      hx-get="/"
+      hx-target="#event-list"
+      hx-trigger="keyup changed delay:300ms"
+      hx-include="#filter-form"
+    />
+  </div>
+
+  <!-- Department -->
+  <div class="min-w-40">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Department</label>
+    <select name="department" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-columbia-blue">
+      <option value="">All Departments</option>
+      {% for dept in departments %}
+      <option value="{{ dept.slug }}" {% if filters.department == dept.slug %}selected{% endif %}>
+        {{ dept.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Category -->
+  <div class="min-w-36">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+    <select name="category" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-columbia-blue">
+      <option value="">All Types</option>
+      {% for cat in categories %}
+      <option value="{{ cat.slug }}" {% if filters.category == cat.slug %}selected{% endif %}>
+        {{ cat.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Date range -->
+  <div class="min-w-36">
+    <label class="block text-xs font-medium text-gray-600 mb-1">From</label>
+    <input type="date" name="start_date"
+           value="{{ filters.start_date or '' }}"
+           class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-columbia-blue" />
+  </div>
+  <div class="min-w-36">
+    <label class="block text-xs font-medium text-gray-600 mb-1">To</label>
+    <input type="date" name="end_date"
+           value="{{ filters.end_date or '' }}"
+           class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-columbia-blue" />
+  </div>
+
+  <!-- Free only -->
+  <div class="flex items-center gap-2 pb-1">
+    <input type="checkbox" name="is_free" value="true" id="is_free"
+           {% if filters.is_free %}checked{% endif %}
+           class="rounded border-gray-300 text-columbia-blue focus:ring-columbia-blue" />
+    <label for="is_free" class="text-sm text-gray-600">Free only</label>
+  </div>
+
+  <!-- Clear filters -->
+  <a href="/" class="text-xs text-gray-400 hover:text-gray-600 pb-1 self-end">Clear filters</a>
+</form>

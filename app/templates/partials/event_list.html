@@ -1,0 +1,43 @@
+{% if events %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for event in events %}
+    {% include "partials/event_card.html" %}
+  {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if total > 20 %}
+<div class="flex justify-center gap-2 mt-8">
+  {% if page > 1 %}
+  <button
+    class="px-4 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+    hx-get="/?page={{ page - 1 }}"
+    hx-target="#event-list"
+    hx-push-url="true"
+  >
+    &larr; Previous
+  </button>
+  {% endif %}
+  <span class="px-4 py-2 text-sm text-gray-500">
+    Showing {{ ((page-1)*20)+1 }}–{{ [page*20, total]|min }} of {{ total }}
+  </span>
+  {% if page * 20 < total %}
+  <button
+    class="px-4 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+    hx-get="/?page={{ page + 1 }}"
+    hx-target="#event-list"
+    hx-push-url="true"
+  >
+    Next &rarr;
+  </button>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-16 text-gray-400">
+  <p class="text-4xl mb-3">📭</p>
+  <p class="text-lg font-medium">No events found</p>
+  <p class="text-sm mt-1">Try adjusting your filters or check back later.</p>
+</div>
+{% endif %}

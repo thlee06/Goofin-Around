@@ -1,0 +1,66 @@
+{% set weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+{% set today = today_date %}
+
+<!-- Month header -->
+<div class="flex items-center justify-between mb-4">
+  <button
+    class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+    hx-get="/calendar?month={{ prev_month }}"
+    hx-target="#calendar-container"
+    hx-push-url="true"
+  >&larr; {{ prev_month_label }}</button>
+
+  <h2 class="text-lg font-semibold text-gray-800">
+    {{ view_date.strftime('%B %Y') }}
+  </h2>
+
+  <button
+    class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+    hx-get="/calendar?month={{ next_month }}"
+    hx-target="#calendar-container"
+    hx-push-url="true"
+  >{{ next_month_label }} &rarr;</button>
+</div>
+
+<!-- Day-of-week headers -->
+<div class="grid grid-cols-7 text-center text-xs font-medium text-gray-500 mb-1">
+  {% for wd in weekdays %}<div class="py-1">{{ wd }}</div>{% endfor %}
+</div>
+
+<!-- Calendar grid -->
+<div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded overflow-hidden">
+  <!-- Leading empty cells -->
+  {% for _ in range(first_weekday) %}
+  <div class="bg-gray-50 min-h-20 p-1"></div>
+  {% endfor %}
+
+  <!-- Day cells -->
+  {% for day, events in calendar_data.items() %}
+  {% set is_today = (view_date.year == today.year and view_date.month == today.month and day == today.day) %}
+  <div
+    class="bg-white min-h-20 p-1 {% if is_today %}ring-2 ring-inset ring-columbia-blue{% endif %} cursor-pointer hover:bg-blue-50 transition-colors"
+    hx-get="/calendar/day?date={{ view_date.year }}-{{ '%02d' % view_date.month }}-{{ '%02d' % day }}"
+    hx-target="#day-events-panel"
+  >
+    <span class="text-xs font-medium {% if is_today %}text-columbia-blue font-bold{% else %}text-gray-700{% endif %}">
+      {{ day }}
+    </span>
+    {% if events %}
+    <div class="mt-1 space-y-0.5">
+      {% for event in events[:3] %}
+      <div class="text-xs truncate rounded px-1 py-0.5 text-white"
+           style="background-color: {{ event.category.color_hex if event.category else '#6B7280' }}">
+        {{ event.title }}
+      </div>
+      {% endfor %}
+      {% if events|length > 3 %}
+      <div class="text-xs text-gray-400 pl-1">+{{ events|length - 3 }} more</div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Day events side panel (HTMX target) -->
+<div id="day-events-panel" class="mt-4"></div>

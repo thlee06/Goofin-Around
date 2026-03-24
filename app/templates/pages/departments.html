@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Departments — Columbia Events Hub{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Departments</h1>
+    <p class="text-sm text-gray-500 mt-1">Events are automatically scraped from these Columbia departments.</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for dept in departments %}
+    <a href="/?department={{ dept.slug }}"
+       class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow flex flex-col gap-2">
+      <div class="flex items-center gap-3">
+        {% if dept.logo_url %}
+        <img src="{{ dept.logo_url }}" alt="" class="w-8 h-8 object-contain" />
+        {% else %}
+        <div class="w-8 h-8 rounded-full bg-columbia-blue flex items-center justify-center text-white text-xs font-bold">
+          {{ dept.name[0] }}
+        </div>
+        {% endif %}
+        <div>
+          <p class="font-semibold text-gray-900 text-sm">{{ dept.name }}</p>
+          {% if dept.school %}<p class="text-xs text-gray-500">{{ dept.school }}</p>{% endif %}
+        </div>
+      </div>
+      {% if dept.last_scraped_at %}
+      <p class="text-xs text-gray-400">
+        Last updated {{ dept.last_scraped_at.strftime('%b %-d, %Y') }}
+      </p>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

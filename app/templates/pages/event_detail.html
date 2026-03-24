@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} — Columbia Events Hub{% endblock %}
+{% block og_title %}{{ event.title }}{% endblock %}
+{% block og_description %}{{ event.short_description or '' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl">
+
+  <!-- Breadcrumb -->
+  <nav class="text-sm text-gray-500 mb-4">
+    <a href="/" class="hover:underline">Events</a>
+    {% if event.department %}
+    &rsaquo;
+    <a href="/?department={{ event.department.slug }}" class="hover:underline">{{ event.department.name }}</a>
+    {% endif %}
+  </nav>
+
+  <!-- Header -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <h1 class="text-2xl font-bold text-gray-900 leading-tight">{{ event.title }}</h1>
+      {% if event.category %}
+      <span class="shrink-0 px-3 py-1 rounded-full text-white text-sm font-medium"
+            style="background-color: {{ event.category.color_hex }}">
+        {{ event.category.name }}
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Meta -->
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+
+      {% if event.start_datetime %}
+      <div>
+        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Date &amp; Time</dt>
+        <dd class="mt-0.5 text-gray-800">
+          {{ event.start_datetime.strftime('%A, %B %-d, %Y') }}
+          {% if not event.all_day %}
+            &mdash; {{ event.start_datetime.strftime('%-I:%M %p') }}
+            {% if event.end_datetime %} to {{ event.end_datetime.strftime('%-I:%M %p') }}{% endif %}
+            <span class="text-gray-400 text-xs">ET</span>
+          {% endif %}
+        </dd>
+      </div>
+      {% endif %}
+
+      {% if event.location_name %}
+      <div>
+        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Location</dt>
+        <dd class="mt-0.5 text-gray-800">
+          {{ event.location_name }}
+          {% if event.location_address and event.location_address != event.location_name %}
+          <span class="text-gray-400 text-xs block">{{ event.location_address }}</span>
+          {% endif %}
+        </dd>
+      </div>
+      {% endif %}
+
+      {% if event.department %}
+      <div>
+        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Department</dt>
+        <dd class="mt-0.5">
+          <a href="/?department={{ event.department.slug }}" class="text-columbia-blue hover:underline">
+            {{ event.department.name }}
+          </a>
+        </dd>
+      </div>
+      {% endif %}
+
+      {% if event.is_free is not none %}
+      <div>
+        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Cost</dt>
+        <dd class="mt-0.5 text-gray-800">{{ 'Free' if event.is_free else 'Paid' }}</dd>
+      </div>
+      {% endif %}
+
+    </dl>
+  </div>
+
+  <!-- Description -->
+  {% if event.description %}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4 prose prose-sm max-w-none">
+    {{ event.description }}
+  </div>
+  {% endif %}
+
+  <!-- Actions -->
+  <div class="flex flex-wrap gap-3">
+    <a href="{{ event.source_url }}" target="_blank" rel="noopener"
+       class="px-4 py-2 bg-columbia-blue text-white text-sm font-medium rounded hover:bg-blue-900 transition-colors">
+      View Original &rarr;
+    </a>
+    {% if event.registration_url %}
+    <a href="{{ event.registration_url }}" target="_blank" rel="noopener"
+       class="px-4 py-2 bg-white border border-columbia-blue text-columbia-blue text-sm font-medium rounded hover:bg-blue-50 transition-colors">
+      Register
+    </a>
+    {% endif %}
+    <a href="/events/{{ event.id }}/export.ics"
+       class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-50 transition-colors">
+      + Add to Calendar
+    </a>
+    <button
+      class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-50 transition-colors save-btn"
+      data-event-id="{{ event.id }}"
+      data-event-title="{{ event.title | e }}"
+      onclick="toggleSave({{ event.id }}, this)"
+    >
+      ☆ Save Event
+    </button>
+  </div>
+
+</div>
+{% endblock %}

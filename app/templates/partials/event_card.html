@@ -1,0 +1,65 @@
+{% set dept_color = event.category.color_hex if event.category else '#6B7280' %}
+<article class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow flex flex-col gap-2">
+
+  <!-- Category badge + department -->
+  <div class="flex items-center justify-between text-xs text-gray-500">
+    <span class="font-medium text-gray-700">{{ event.department.name if event.department else '' }}</span>
+    {% if event.category %}
+    <span class="px-2 py-0.5 rounded-full text-white text-xs font-medium"
+          style="background-color: {{ event.category.color_hex }}">
+      {{ event.category.name }}
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- Title -->
+  <a href="/events/{{ event.id }}" class="text-base font-semibold text-columbia-blue hover:underline leading-snug">
+    {{ event.title }}
+  </a>
+
+  <!-- Date & Time -->
+  {% if event.start_datetime %}
+  <p class="text-sm text-gray-600 flex items-center gap-1">
+    <span>📅</span>
+    <span>
+      {{ event.start_datetime.strftime('%a, %b %-d, %Y') }}
+      {% if not event.all_day %}
+        &mdash; {{ event.start_datetime.strftime('%-I:%M %p') }}
+      {% endif %}
+    </span>
+  </p>
+  {% endif %}
+
+  <!-- Location -->
+  {% if event.location_name %}
+  <p class="text-sm text-gray-600 flex items-center gap-1">
+    <span>📍</span>
+    <span>{{ event.location_name }}</span>
+  </p>
+  {% endif %}
+
+  <!-- Description snippet -->
+  {% if event.short_description %}
+  <p class="text-sm text-gray-500 line-clamp-2">{{ event.short_description }}</p>
+  {% endif %}
+
+  <!-- Actions -->
+  <div class="flex items-center gap-3 mt-1 pt-2 border-t border-gray-100">
+    <a href="/events/{{ event.id }}" class="text-xs font-medium text-columbia-blue hover:underline">
+      Details &rarr;
+    </a>
+    <a href="/events/{{ event.id }}/export.ics"
+       class="text-xs text-gray-500 hover:text-gray-700"
+       title="Add to calendar">
+      + Calendar
+    </a>
+    <button
+      class="text-xs text-gray-500 hover:text-gray-700 save-btn ml-auto"
+      data-event-id="{{ event.id }}"
+      data-event-title="{{ event.title | e }}"
+      onclick="toggleSave({{ event.id }}, this)"
+    >
+      ☆ Save
+    </button>
+  </div>
+</article>

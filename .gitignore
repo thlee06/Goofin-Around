@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment
+.env
+
+# Database (local dev SQLite file)
+*.db
+*.sqlite3
+
+# Whoosh search index
+search_index/
+
+# Playwright browser binaries
+.playwright/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Alembic (keep versions/, ignore __pycache__ inside it)
+alembic/versions/__pycache__/
