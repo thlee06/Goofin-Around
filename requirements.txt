@@ -26,7 +26,7 @@ whoosh==2.7.4
 icalendar==6.0.0
 
 # Geocoding
-geocodio==1.5.1
+geocodio==1.0.1
 
 # Monitoring
 sentry-sdk[fastapi]==2.14.0
