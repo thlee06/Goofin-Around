@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Location utilities: map location name strings to lat/lon coordinates.
 

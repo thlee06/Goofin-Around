@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 event_service.py — Query and filter events from the database.
 """

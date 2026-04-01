@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 location_service.py — Geocode event location strings.
 

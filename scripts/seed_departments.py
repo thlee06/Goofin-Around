@@ -30,27 +30,43 @@ CATEGORIES = [
 # scraper_class must match the class name in app/scrapers/departments/<slug>.py
 DEPARTMENTS = [
     {
-        "name": "Computer Science",
-        "slug": "cs",
-        "school": "SEAS",
-        "website_url": "https://www.cs.columbia.edu/events/",
-        "scraper_class": "CSScraper",
-        "scrape_interval_hours": 6,
-    },
-    {
         "name": "Economics",
         "slug": "economics",
         "school": "Columbia College / SIPA",
         "website_url": "https://econ.columbia.edu/events/",
-        "scraper_class": "EconomicsScraper",
+        "scraper_class": "EconScraper",
         "scrape_interval_hours": 6,
     },
-    # Add more departments here as you build their scrapers:
+    {
+        "name": "Psychology",
+        "slug": "psychology",
+        "school": "Columbia College / GSAS",
+        "website_url": "https://psychology.columbia.edu/events",
+        "scraper_class": "PsychologyScraper",
+        "scrape_interval_hours": 6,
+    },
+    {
+        "name": "Law School",
+        "slug": "law",
+        "school": "Columbia Law School",
+        "website_url": "https://www.law.columbia.edu/events",
+        "scraper_class": "LawScraper",
+        "scrape_interval_hours": 6,
+    },
+    {
+        "name": "SIPA",
+        "slug": "sipa",
+        "school": "School of International & Public Affairs",
+        "website_url": "https://www.sipa.columbia.edu/communities-connections/events",
+        "scraper_class": "SIPAScraper",
+        "scrape_interval_hours": 6,
+    },
+    # Templates for future scrapers:
     # {
     #     "name": "Data Science Institute",
     #     "slug": "dsi",
     #     "school": "SEAS",
-    #     "website_url": "https://datascience.columbia.edu/events/",
+    #     "website_url": "https://datascience.columbia.edu/news-and-events/events/",
     #     "scraper_class": "DSIScraper",
     #     "scrape_interval_hours": 6,
     # },

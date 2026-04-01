@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 date_parser.py — Normalize messy date strings from university department websites.
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 registry.py — Auto-discovers all scraper classes in scrapers/departments/.
 
