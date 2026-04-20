@@ -61,6 +61,30 @@ DEPARTMENTS = [
         "scraper_class": "SIPAScraper",
         "scrape_interval_hours": 6,
     },
+    {
+        "name": "Computer Science",
+        "slug": "cs",
+        "school": "SEAS",
+        "website_url": "https://www.cs.columbia.edu/calendar/",
+        "scraper_class": "CSScraper",
+        "scrape_interval_hours": 6,
+    },
+    {
+        "name": "Political Science",
+        "slug": "polisci",
+        "school": "Columbia College / GSAS",
+        "website_url": "https://polisci.columbia.edu/events",
+        "scraper_class": "PolSciScraper",
+        "scrape_interval_hours": 6,
+    },
+    {
+        "name": "Data Science Institute",
+        "slug": "dsi",
+        "school": "SEAS",
+        "website_url": "https://datascience.columbia.edu/news-and-events/events/",
+        "scraper_class": "DSIScraper",
+        "scrape_interval_hours": 6,
+    },
     # Templates for future scrapers:
     # {
     #     "name": "Data Science Institute",

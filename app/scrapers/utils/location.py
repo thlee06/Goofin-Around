@@ -46,12 +46,17 @@ def get_coordinates(location_name: str, location_address: Optional[str] = None) 
     if _ROOM_ONLY.match(query.strip()):
         return None, None
 
-    # 1. Check manual overrides
+    # 1. Check manual overrides — use substring match so "Pupin Hall, Room 301"
+    #    still resolves to the "pupin hall" entry.
     overrides = _load_overrides()
-    key = location_name.strip().lower() if location_name else ""
-    if key in overrides:
-        entry = overrides[key]
+    loc_lower = location_name.strip().lower() if location_name else ""
+    # First try exact match, then try each key as a substring of the location string
+    if loc_lower in overrides:
+        entry = overrides[loc_lower]
         return entry["lat"], entry["lon"]
+    for k, entry in overrides.items():
+        if k in loc_lower:
+            return entry["lat"], entry["lon"]
 
     # 2. Try Geocodio
     from app.config import get_settings
