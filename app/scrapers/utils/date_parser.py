@@ -31,6 +31,8 @@ NON_ET_PATTERNS = re.compile(
 
 # Patterns we clean before passing to dateutil
 CLEANUP_PATTERNS = [
+    (r"\ba\.m\.\b", "am"),          # "9:10 a.m." -> "9:10 am"  (Law School format)
+    (r"\bp\.m\.\b", "pm"),          # "1:30 p.m." -> "1:30 pm"
     (r"\|", " "),                   # "Mar 23 | 4pm" -> "Mar 23  4pm"
     (r"(\d)(am|pm)", r"\1 \2"),     # "4pm" -> "4 pm"
     (r"(\d)\s*–\s*(\d)", r"\1-\2"), # en-dash -> hyphen in time ranges

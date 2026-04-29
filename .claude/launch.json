@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "goofin-around",
+      "runtimeExecutable": "/tmp/start_goofin.sh",
+      "runtimeArgs": [],
+      "port": 8000
+    }
+  ]
+}

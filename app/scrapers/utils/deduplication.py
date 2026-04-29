@@ -46,13 +46,25 @@ def upsert_event(db: Session, event_data: dict) -> bool:
             if key not in ("id", "created_at", "external_id"):
                 setattr(existing, key, value)
         existing.is_active = True
+        _auto_assign_category(db, existing)
         db.commit()
         return False
     else:
         event = Event(**event_data)
         db.add(event)
+        db.flush()  # get event.id before category assignment
+        _auto_assign_category(db, event)
         db.commit()
         return True
+
+
+def _auto_assign_category(db: Session, event) -> None:
+    """Assign a category to an event if it doesn't already have one."""
+    try:
+        from app.services.event_service import assign_category
+        assign_category(db, event)
+    except Exception as exc:
+        logger.debug("Category assignment failed for event %s: %s", getattr(event, "id", "?"), exc)
 
 
 def find_cross_department_duplicates(

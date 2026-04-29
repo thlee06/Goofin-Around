@@ -15,17 +15,7 @@
   <!-- Filters -->
   {% include "partials/filter_bar.html" %}
 
-  <!-- Results count -->
-  <div class="flex items-center justify-between">
-    <p class="text-sm text-gray-500">
-      {% if total == 0 %}No events found{% elif total == 1 %}1 event{% else %}{{ total }} events{% endif %}
-    </p>
-    {% if filters.get('q') or filters.get('department') or filters.get('category') %}
-    <a href="/" class="text-xs text-columbia-blue hover:underline">Clear all filters</a>
-    {% endif %}
-  </div>
-
-  <!-- Event list (HTMX swap target) -->
+  <!-- Event list (HTMX swap target) — results count is rendered inside the partial -->
   <div id="event-list">
     {% include "partials/event_list.html" %}
   </div>

@@ -8,6 +8,7 @@ import calendar
 from datetime import date, datetime, timezone
 from typing import Optional
 
+from sqlalchemy import nullslast
 from sqlalchemy.orm import Session
 
 from app.models.event import Event
@@ -47,11 +48,22 @@ def get_events(
     if category:
         query = query.join(Category).filter(Category.slug == category)
 
+    # Date filtering: if the user sets start_date, use it exactly.
+    # Otherwise default to upcoming events only (today or later).
+    # Undated events (NULL start_datetime) are excluded from the default
+    # listing since they are typically past events whose dates failed to parse.
     if start_date:
-        query = query.filter(Event.start_datetime >= datetime.combine(start_date, datetime.min.time()))
+        query = query.filter(
+            Event.start_datetime >= datetime.combine(start_date, datetime.min.time())
+        )
+    else:
+        today_dt = datetime.combine(date.today(), datetime.min.time())
+        query = query.filter(Event.start_datetime >= today_dt)
 
     if end_date:
-        query = query.filter(Event.start_datetime <= datetime.combine(end_date, datetime.max.time()))
+        query = query.filter(
+            Event.start_datetime <= datetime.combine(end_date, datetime.max.time())
+        )
 
     if is_free is not None:
         query = query.filter(Event.is_free == is_free)
@@ -63,7 +75,7 @@ def get_events(
 
     total = query.count()
     events = (
-        query.order_by(Event.start_datetime.asc())
+        query.order_by(nullslast(Event.start_datetime.asc()))
         .offset((page - 1) * per_page)
         .limit(per_page)
         .all()

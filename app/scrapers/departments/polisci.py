@@ -14,6 +14,7 @@ Event object fields (same schema as Psychology):
   can_register, reglink, field_cu_event_contact_*, event_url
 """
 
+import html as _html
 import json
 import logging
 import re
@@ -82,7 +83,7 @@ class PolSciScraper(BaseScraper):
             return []
 
     def _from_json(self, ev: dict, url: str) -> dict:
-        title = ev.get("title", "").strip()
+        title = _html.unescape(ev.get("title", "").strip())
         if not title:
             return {}
 
@@ -108,7 +109,8 @@ class PolSciScraper(BaseScraper):
 
         lat, lon = get_coordinates(location_name, location_address)
 
-        html_desc = ev.get("views_conditional_field", "") or ""
+        # Decode HTML entities then strip tags
+        html_desc = _html.unescape(ev.get("views_conditional_field", "") or "")
         description = re.sub(r"<[^>]+>", " ", html_desc).strip()
         description = re.sub(r"\s+", " ", description)
 

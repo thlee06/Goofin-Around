@@ -176,30 +176,33 @@ class LawScraper(BaseScraper):
         return result
 
     def _extract_description(self, soup) -> str | None:
-        # Drupal body field selectors
-        for sel in [".field--name-body", ".field-name-body", ".event__body", ".event-description"]:
+        # Drupal body field selectors (try most-specific first)
+        for sel in [
+            ".field--name-body",
+            ".field-name-body",
+            ".field--type-text-with-summary",
+            ".event__body",
+            ".event-description",
+            ".field--name-field-description",
+        ]:
             el = soup.select_one(sel)
             if el:
                 text = el.get_text(" ", strip=True)
                 if len(text) > 50:
-                    return text
+                    return text[:2000]
 
-        # "About This Event" section fallback
-        about = soup.find(string=re.compile(r"about this event", re.I))
-        if about:
-            texts = []
-            for sib in about.parent.next_siblings:
-                t = getattr(sib, "get_text", lambda **k: str(sib))(strip=True)
-                if t:
-                    texts.append(t)
-            if texts:
-                return " ".join(texts)[:2000]
-
-        # Grab first substantial paragraph from main content
-        main = soup.find("main") or soup.find("article") or soup.body
-        if main:
-            for p in main.find_all("p"):
-                text = p.get_text(strip=True)
-                if len(text) > 100:
-                    return text
+        # Grab first substantial paragraph from main content.
+        # Prefer <article> (main body) over <main> (which includes sidebar).
+        # Skip paragraphs that start with calendar/metadata labels.
+        _SKIP_PREFIXES = re.compile(
+            r"^(add to calendar|date[:\s]|date[A-Z]|time[:\s]|location[:\s]|register with)",
+            re.IGNORECASE
+        )
+        container = soup.find("article") or soup.find("main") or soup.body
+        if container:
+            for p in container.find_all("p"):
+                # Use space separator so inline links don't run into surrounding text
+                text = re.sub(r"\s+", " ", p.get_text(" ", strip=True))
+                if len(text) > 100 and not _SKIP_PREFIXES.match(text):
+                    return text[:2000]
         return None

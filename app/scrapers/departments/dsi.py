@@ -176,9 +176,10 @@ class DSIScraper(BaseScraper):
         start_dt, _ = normalize_safe(raw.get("start_date", "") or "")
         end_dt, _   = normalize_safe(raw.get("end_date", "") or "")
 
-        # Description — strip HTML tags
-        import re
+        # Description — decode HTML entities then strip HTML tags
+        import re, html as _html
         raw_desc = raw.get("description") or raw.get("excerpt") or ""
+        raw_desc = _html.unescape(raw_desc)           # &lt;br&gt; → <br>
         description = re.sub(r"<[^>]+>", " ", raw_desc).strip()
         description = re.sub(r"\s+", " ", description)
 

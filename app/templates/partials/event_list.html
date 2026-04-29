@@ -1,3 +1,8 @@
+<!-- Results count (re-rendered on every HTMX swap) -->
+<p class="text-sm text-gray-500 mb-4">
+  {% if total == 0 %}No events found{% elif total == 1 %}1 event{% else %}{{ total }} events{% endif %}
+</p>
+
 {% if events %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
   {% for event in events %}

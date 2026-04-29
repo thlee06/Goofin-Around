@@ -20,24 +20,54 @@ async def index(
     q: Optional[str] = None,
     department: Optional[str] = None,
     category: Optional[str] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-    is_free: Optional[bool] = None,
+    # Accept as strings so empty values from HTMX form don't cause 422 errors
+    start_date: Optional[str] = Query(default=None),
+    end_date: Optional[str] = Query(default=None),
+    is_free: Optional[str] = Query(default=None),
     page: int = Query(default=1, ge=1),
 ):
+    # Normalise empty strings → None; parse dates
+    q = q or None
+    department = department or None
+    category = category or None
+    start_date_parsed: Optional[date] = None
+    end_date_parsed: Optional[date] = None
+    is_free_parsed: Optional[bool] = None
+    if start_date:
+        try:
+            start_date_parsed = date.fromisoformat(start_date)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            end_date_parsed = date.fromisoformat(end_date)
+        except ValueError:
+            pass
+    if is_free and is_free.lower() in ("true", "1", "on", "yes"):
+        is_free_parsed = True
+
     events, total = get_events(
         db, q=q, department=department, category=category,
-        start_date=start_date, end_date=end_date, is_free=is_free,
-        page=page,
+        start_date=start_date_parsed, end_date=end_date_parsed,
+        is_free=is_free_parsed, page=page,
     )
     departments = _get_departments(db)
     categories = _get_categories(db)
+
+    filters = {
+        "q": q,
+        "department": department,
+        "category": category,
+        "start_date": start_date_parsed,
+        "end_date": end_date_parsed,
+        "is_free": is_free_parsed,
+    }
 
     # HTMX partial swap: return only the event list fragment
     if request.headers.get("HX-Request"):
         return templates.TemplateResponse(
             "partials/event_list.html",
-            {"request": request, "events": events, "total": total, "page": page},
+            {"request": request, "events": events, "total": total, "page": page, "filters": filters},
         )
 
     return templates.TemplateResponse(
@@ -49,10 +79,7 @@ async def index(
             "page": page,
             "departments": departments,
             "categories": categories,
-            "filters": {
-                "q": q, "department": department, "category": category,
-                "start_date": start_date, "end_date": end_date, "is_free": is_free,
-            },
+            "filters": filters,
         },
     )
 

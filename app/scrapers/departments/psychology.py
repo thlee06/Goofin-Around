@@ -14,6 +14,7 @@ in the JSON payload.
 Source: https://psychology.columbia.edu/events
 """
 
+import html as _html
 import json
 import logging
 import re
@@ -90,7 +91,7 @@ class PsychologyScraper(BaseScraper):
             return []
 
     def _from_json(self, ev: dict, url: str) -> dict:
-        title = ev.get("title", "").strip()
+        title = _html.unescape(ev.get("title", "").strip())
         if not title:
             return {}
 
@@ -123,8 +124,8 @@ class PsychologyScraper(BaseScraper):
 
         lat, lon = get_coordinates(location_name, location_address)
 
-        # Description is HTML; strip tags for short version
-        html_desc = ev.get("views_conditional_field", "") or ""
+        # Description is HTML; decode entities then strip tags
+        html_desc = _html.unescape(ev.get("views_conditional_field", "") or "")
         description = re.sub(r"<[^>]+>", " ", html_desc).strip()
         description = re.sub(r"\s+", " ", description)
 
